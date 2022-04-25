@@ -20,28 +20,41 @@
 
 using namespace Gameplay;
 using namespace Gameplay::Physics;
-float movY, movX;
-void movement(GameObject::Sptr mainchara)
+float movX, movZ, movEnemyX;
+void playerMovement(GameObject::Sptr mainchara)
 {
-	if (glfwGetKey(Application::Get().GetWindow(), GLFW_KEY_W) == GLFW_PRESS)
+	if (glfwGetKey(Application::Get().GetWindow(), GLFW_KEY_D) == GLFW_PRESS)
 	{
 		movX -= 0.02f;
 	}
-	if (glfwGetKey(Application::Get().GetWindow(), GLFW_KEY_S) == GLFW_PRESS)
+	if (glfwGetKey(Application::Get().GetWindow(), GLFW_KEY_A) == GLFW_PRESS)
 	{
 		movX += 0.02f;
 	}
-	if (glfwGetKey(Application::Get().GetWindow(), GLFW_KEY_D) == GLFW_PRESS)
+	if (glfwGetKey(Application::Get().GetWindow(), GLFW_KEY_W) == GLFW_PRESS)
 	{
-		movY += 0.02f;
+		movZ += 0.02f;
 	}
-	if (glfwGetKey(Application::Get().GetWindow(), GLFW_KEY_A) == GLFW_PRESS)
+	if (glfwGetKey(Application::Get().GetWindow(), GLFW_KEY_S) == GLFW_PRESS)
 	{
-		movY -= 0.02f;
+		movZ -= 0.02f;
 	}
-	mainchara->SetPostion(mainchara->GetPosition() + glm::vec3(movX, movY, 0.0f));
+	mainchara->SetPostion(mainchara->GetPosition() + glm::vec3(movX, 0.0f, movZ));
 	movX = 0;
-	movY = 0;
+	movZ = 0;
+}
+void enemyMovement(GameObject::Sptr enemy)
+{
+	if (glfwGetKey(Application::Get().GetWindow(), GLFW_KEY_J) == GLFW_PRESS)
+	{
+		movEnemyX += 0.02f;
+	}
+	if (glfwGetKey(Application::Get().GetWindow(), GLFW_KEY_L) == GLFW_PRESS)
+	{
+		movEnemyX -= 0.02f;
+	}
+	enemy->SetPostion(enemy->GetPosition() + glm::vec3(movEnemyX, 0.0f, 0.0f));
+	movEnemyX = 0;
 }
 
 RenderLayer::RenderLayer() :
@@ -304,8 +317,10 @@ void RenderLayer::_AccumulateLighting()
 			shadowCam->GetProjectionMask()->Bind(6);
 		}
 
-		GameObject::Sptr Character = app.CurrentScene()->FindObjectByName("Monkey 1");
-		movement(Character);
+		GameObject::Sptr Character = app.CurrentScene()->FindObjectByName("Megaman");
+		playerMovement(Character);
+		GameObject::Sptr Character1 = app.CurrentScene()->FindObjectByName("Monkey 1");
+		enemyMovement(Character1);
 		//_shadowShader->SetUniformMatrix("u_ClipToShadow", clipToShadow); 
 		_shadowShader->SetUniformMatrix("u_ViewToShadow", viewToShadow); 
 

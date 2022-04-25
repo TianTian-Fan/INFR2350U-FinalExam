@@ -27,9 +27,7 @@ void NightVision::Apply(const Framebuffer::Sptr& gBuffer)
 
 void NightVision::RenderImGui()
 {
-	LABEL_LEFT(ImGui::SliderFloat, "Night Vision Vector X", &_nvVec.x, -10.0f, 10.0f);
-	LABEL_LEFT(ImGui::SliderFloat, "Night Vision Vector y", &_nvVec.y, -10.0f, 10.0f);
-	LABEL_LEFT(ImGui::SliderFloat, "Night Vision Vector Z", &_nvVec.z, -10.0f, 10.0f);
+
 
 }
 

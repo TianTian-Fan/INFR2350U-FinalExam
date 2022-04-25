@@ -140,15 +140,17 @@ void DefaultSceneLayer::_CreateScene()
 		// Load in the meshes
 		MeshResource::Sptr monkeyMesh = ResourceManager::CreateAsset<MeshResource>("Monkey.obj");
 		MeshResource::Sptr shipMesh   = ResourceManager::CreateAsset<MeshResource>("fenrir.obj");
+		MeshResource::Sptr barrelMesh = ResourceManager::CreateAsset<MeshResource>("barrel_projectile.obj");
 
 		// Load in some textures
 		Texture2D::Sptr    boxTexture   = ResourceManager::CreateAsset<Texture2D>("textures/background.png");
 		Texture2D::Sptr    megamanTex   = ResourceManager::CreateAsset<Texture2D>("textures/megaman_cube_texture.png");
 		Texture2D::Sptr    boxSpec      = ResourceManager::CreateAsset<Texture2D>("textures/box-specular.png");
 		Texture2D::Sptr    monkeyTex    = ResourceManager::CreateAsset<Texture2D>("textures/monkeyTEX.png");
-		Texture2D::Sptr    leafTex      = ResourceManager::CreateAsset<Texture2D>("textures/leaves.png");
-		leafTex->SetMinFilter(MinFilter::Nearest);
-		leafTex->SetMagFilter(MagFilter::Nearest);
+		//Texture2D::Sptr    leafTex      = ResourceManager::CreateAsset<Texture2D>("textures/leaves.png");
+		Texture2D::Sptr    barrelTex    = ResourceManager::CreateAsset<Texture2D>("textures/barrel.png");
+		//leafTex->SetMinFilter(MinFilter::Nearest);
+		//leafTex->SetMagFilter(MagFilter::Nearest);
 
 		// Load some images for drag n' drop
 		ResourceManager::CreateAsset<Texture2D>("textures/flashlight.png");
@@ -225,8 +227,17 @@ void DefaultSceneLayer::_CreateScene()
 			monkeyMaterial->Name = "Monkey";
 			monkeyMaterial->Set("u_Material.AlbedoMap", monkeyTex);
 			monkeyMaterial->Set("u_Material.NormalMap", normalMapDefault);
-			monkeyMaterial->Set("u_Material.Shininess", 0.5f);
+			monkeyMaterial->Set("u_Material.Shininess", 0.1f);
 		}
+
+		Material::Sptr barrelMaterial = ResourceManager::CreateAsset<Material>(deferredForward);
+		{
+			barrelMaterial->Name = "Barrel";
+			barrelMaterial->Set("u_Material.AlbedoMap", barrelTex);
+			barrelMaterial->Set("u_Material.Shininess", 0.1f);
+			barrelMaterial->Set("u_Material.NormalMap", normalMapDefault);
+		}
+
 
 		// This will be the reflective material, we'll make the whole thing 50% reflective
 		Material::Sptr testMaterial = ResourceManager::CreateAsset<Material>(deferredForward); 
@@ -246,7 +257,7 @@ void DefaultSceneLayer::_CreateScene()
 		}
 
 		// Our foliage vertex shader material 
-		Material::Sptr foliageMaterial = ResourceManager::CreateAsset<Material>(foliageShader);
+		/*Material::Sptr foliageMaterial = ResourceManager::CreateAsset<Material>(foliageShader);
 		{
 			foliageMaterial->Name = "Foliage Shader";
 			foliageMaterial->Set("u_Material.AlbedoMap", leafTex);
@@ -309,7 +320,7 @@ void DefaultSceneLayer::_CreateScene()
 			whiteBrick->Set("u_Material.AlbedoMap", ResourceManager::CreateAsset<Texture2D>("textures/displacement_map.png"));
 			whiteBrick->Set("u_Material.Specular", solidGrey);
 			whiteBrick->Set("u_Material.NormalMap", ResourceManager::CreateAsset<Texture2D>("textures/normal_map.png"));
-		}
+		}*/
 
 		Material::Sptr normalmapMat = ResourceManager::CreateAsset<Material>(deferredForward);
 		{
@@ -340,7 +351,15 @@ void DefaultSceneLayer::_CreateScene()
 		// Create some lights for our scene
 		GameObject::Sptr light1 = scene->CreateGameObject("Light1");
 		Light::Sptr lightComponent = light1->Add<Light>();
-		light1->SetPostion(glm::vec3(5.4f, 3.0f, 1.0f));
+		light1->SetPostion(glm::vec3(15.0f, 3.0f, 1.0f));
+
+		GameObject::Sptr light2 = scene->CreateGameObject("Light2");
+		Light::Sptr lightComponent2 = light2->Add<Light>();
+		light2->SetPostion(glm::vec3(15.0f, -16.6f, 1.0f));
+
+		GameObject::Sptr light3 = scene->CreateGameObject("Light3");
+		Light::Sptr lightComponent3 = light3->Add<Light>();
+		light3->SetPostion(glm::vec3(10.0f, -16.6f, 1.0f));
 
 
 
@@ -387,6 +406,14 @@ void DefaultSceneLayer::_CreateScene()
 			physics->AddCollider(BoxCollider::Create(glm::vec3(50.0f, 50.0f, 1.0f)))->SetPosition({ 0,0,-1 });
 		}
 
+		GameObject::Sptr barrel = scene->CreateGameObject("Barrel");
+		{
+			RenderComponent::Sptr renderer = barrel->Add<RenderComponent>();
+			renderer->SetMesh(barrelMesh);
+			renderer->SetMaterial(barrelMaterial);
+			barrel->SetPostion(glm::vec3(0.5f, 4.75f, 1.0f));
+		}
+
 		// Add some walls :3
 		/* {
 			MeshResource::Sptr wall = ResourceManager::CreateAsset<MeshResource>();
@@ -424,21 +451,42 @@ void DefaultSceneLayer::_CreateScene()
 			boxMesh->GenerateMesh();
 
 			// Set and rotation position in the scene
-			megamanBox->SetPostion(glm::vec3(0, -4.0f, 1.0f));
+			megamanBox->SetPostion(glm::vec3(5.1f, 6.6f, 0.52f));
+			megamanBox->SetRotation(glm::vec3(0.0f, -90.0f, 0.0f));
 
 			// Add a render component
 			RenderComponent::Sptr renderer = megamanBox->Add<RenderComponent>();
 			renderer->SetMesh(boxMesh);
 			renderer->SetMaterial(megamanMaterial);
+			GameObject::Sptr particles = scene->CreateGameObject("Particles");
+			megamanBox->AddChild(particles);
+			particles->SetPostion({ 0.3f, 0.0f, -0.75f });
+			ParticleSystem::Sptr particleManager1 = particles->Add<ParticleSystem>();
+			particleManager1->Atlas = particleTex;
+
+			ParticleSystem::ParticleData emitterr;
+			emitterr.Type = ParticleType::SphereEmitter;
+			emitterr.TexID = 2;
+			emitterr.Position = glm::vec3(0.0f);
+			emitterr.Color = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
+			emitterr.Lifetime = 1.0f / 30.0f;
+			emitterr.SphereEmitterData.Timer = 1.0f / 30.0f;
+			emitterr.SphereEmitterData.Velocity = 0.2f;
+			emitterr.SphereEmitterData.LifeRange = { 0.5f, 1.0f };
+			emitterr.SphereEmitterData.Radius = 0.25f;
+			emitterr.SphereEmitterData.SizeRange = { 0.25f, 0.5f };
+
+			particleManager1->AddEmitter(emitterr);
 		}
 
 		GameObject::Sptr monkey1 = scene->CreateGameObject("Monkey 1");
 		{
 			// Set position in the scene
-			monkey1->SetPostion(glm::vec3(5.1f, 5.5f, 1.0f));
+			monkey1->SetPostion(glm::vec3(-4.9f, 5.5f, 1.0f));
 
 			// Add some behaviour that relies on the physics body
 			monkey1->Add<JumpBehaviour>();
+			monkey1->Add<RotatingBehaviour>();
 
 			// Create and attach a renderer for the monkey
 			RenderComponent::Sptr renderer = monkey1->Add<RenderComponent>();
@@ -447,7 +495,7 @@ void DefaultSceneLayer::_CreateScene()
 
 			// Example of a trigger that interacts with static and kinematic bodies as well as dynamic bodies
 			TriggerVolume::Sptr trigger = monkey1->Add<TriggerVolume>();
-			trigger->SetFlags(TriggerTypeFlags::Statics | TriggerTypeFlags::Kinematics);
+			trigger->SetFlags(TriggerTypeFlags::Statics | TriggerTypeFlags::Dynamics);
 			trigger->AddCollider(BoxCollider::Create(glm::vec3(1.0f)));
 
 			monkey1->Add<TriggerVolumeEnterBehaviour>();
@@ -459,17 +507,6 @@ void DefaultSceneLayer::_CreateScene()
 
 			particleManager1->_gravity = glm::vec3(0.0f);
 
-			ParticleSystem::ParticleData emitterr;
-			emitterr.Type = ParticleType::SphereEmitter;
-			emitterr.TexID = 2;
-			emitterr.Position = glm::vec3(0.0f);
-			emitterr.Color = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
-			emitterr.Lifetime = 1.0f / 50.0f;
-			emitterr.SphereEmitterData.Timer = 1.0f / 50.0f;
-			emitterr.SphereEmitterData.Velocity = 0.5f;
-			emitterr.SphereEmitterData.LifeRange = { 1.0f, 3.0f };
-			emitterr.SphereEmitterData.Radius = 0.5f;
-			emitterr.SphereEmitterData.SizeRange = { 0.5f, 1.0f };
 
 			ParticleSystem::ParticleData emitterr2;
 			emitterr2.Type = ParticleType::SphereEmitter;
@@ -483,7 +520,6 @@ void DefaultSceneLayer::_CreateScene()
 			emitterr2.SphereEmitterData.Radius = 0.25f;
 			emitterr2.SphereEmitterData.SizeRange = { 0.25f, 0.5f };
 
-			particleManager1->AddEmitter(emitterr);
 			particleManager1->AddEmitter(emitterr2);
 
 		}
